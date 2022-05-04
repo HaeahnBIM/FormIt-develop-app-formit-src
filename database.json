@@ -1,0 +1,7 @@
+{
+  "host": "192.168.40.145",
+  "user": "BimUser",
+  "password": "@summer2014",
+  "port": 1433,
+  "database": "EKP_BIM"
+}
