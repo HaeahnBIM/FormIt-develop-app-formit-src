@@ -83,6 +83,10 @@ const styles = (theme) => ({
       display: "block",
     },
   },
+  subtitle: {
+    fontSize: "1.0rem",
+    marginLeft: 10,
+  },
   search: {
     position: "relative",
     borderRadius: th.shape.borderRadius,
@@ -147,7 +151,7 @@ class App extends Component {
       currentId: "",
       x: 0,
       y: 0,
-      tableData: [],
+      rows: [],
     };
     this.stateRefresh = this.stateRefresh.bind(this);
     this.handleValueChange = this.handleValueChange.bind(this);
@@ -173,13 +177,15 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.timer = setInterval(this.progress, 20);
+    console.log("componentDidMount");
+    //this.timer = setInterval(this.progress, 20);
     this.callApi("/api/projects")
       .then((res) => this.setState({ projects: res }))
       .catch((err) => console.log(err));
   }
 
   componentWillUnmount() {
+    //console.log("componentWillUnmount");
     clearInterval(this.timer);
   }
 
@@ -274,19 +280,104 @@ class App extends Component {
     });
   }
 
+  convertUnit = (val, unit) => {
+    let val2 = 0;
+    if (unit === 0) {
+      console.log(unit);
+      val2 = 1
+    } 
+    else if (unit === 1) {
+      console.log(unit);
+      val2 = 0.09290304
+    } 
+    else if (unit === 2) {
+      console.log(unit);
+      val2 = 12
+    } 
+    else if (unit === 3) {
+      console.log(unit);
+      val2 = 0.09290304
+    }
+     else if (unit === 4) {
+      console.log(unit);
+      val2 = 0.09290304
+    }
+
+    // let a = FormIt.UnitType.kImperialFeetInches;
+    // let b = FormIt.UnitType.kMetricMeter;
+    // let c = FormIt.UnitType.kImperialInches;
+    // let d = FormIt.UnitType.kMetricCentimeter;
+    // let e = FormIt.UnitType.kMetricMillimeter;
+    // console.log(a, b, c, d, e);
+
+    return val * val2;
+  };
+
   async handleGetArea(e) {
-    console.log("handleGetArea: start: ", e.target);
+    console.log("handleGetArea: start: ");
 
     let selection = await FormIt.Selection.GetSelections();
 
-    //let props = FormIt.Model.GetPropertiesForSelected();
+    let history = 0;
 
-    //console.log("GetPropertiesForSelected: " + props);
+    let allBody = await WSM.APIGetAllObjectsByTypeReadOnly(history, 1); // 1=nBodyType
+    //console.log("allBody", allBody);
 
-    for (var j = 0; j < selection.length; j++) {
-      let historyDepth = selection[j]["ids"].length - 1;
+    let buildings = [];
+    for (var i = 0; i < allBody.length; i++) {
+      let curId = allBody[i];
 
-      let a = selection[j]["ids"][historyDepth];
+    let layerId = await WSM.APIGetObjectLayersReadOnly(history, curId)	
+    console.log("layerObj", layerId[0]);
+
+    let layerData = await WSM.APIGetLayerDataReadOnly(history, layerId[0]);
+    console.log("layerData", layerData);
+
+      var objectProps = await WSM.APIGetObjectPropertiesReadOnly(
+        history,
+        curId
+      );
+
+      var objectLevels = await WSM.APIGetObjectLevelsReadOnly(history, curId);
+
+      let sumArea = 0;
+      for (var j = 0; j < objectLevels.length; j++) {
+        let curLevelId = objectLevels[j];
+        let area = await FormIt.Levels.GetAreaForObjects(
+          history,
+          curLevelId,
+          curId
+        );
+
+        let levelData = await WSM.APIGetLevelDataReadOnly(history, curLevelId);
+        if (levelData.dElevation < 0) {
+          continue;
+        } 
+        
+        sumArea = sumArea + this.convertUnit(area, FormIt.UnitType.kMetricMeter);
+        sumArea = Number((sumArea).toFixed(2));
+      }
+      sumArea = Number((sumArea).toFixed(2));
+
+      buildings.push({
+        id: curId,
+        col1: layerData.name,
+        col2: objectProps.sObjectName,
+        col3: objectLevels.length,
+        col4: sumArea,
+      });
+
+      //console.log("objectProperties", objectProperties);
+    }
+
+    await this.setState({ rows: buildings.map((row) => ({ ...row })) });
+
+    let props = await FormIt.Model.GetPropertiesForSelected();
+
+    for (var k = 0; k < selection.length; k++) {
+      let historyDepth = selection[k]["ids"].length - 1;
+
+      let a = selection[k]["ids"][historyDepth];
 
       let id = a["Object"];
 
@@ -294,60 +385,67 @@ class App extends Component {
         historyDepth,
         id
       );
-
-      console.log(objectProperties);
+      console.log("objectProperties", objectProperties);
       // bReportAreaByLevel: true
       // sObjectName: "lkjkjskldjjlLVFJLJLJKJKLJKLJKLJ"
 
-      var objectName = await WSM.APIGetObjectNameReadOnly(historyDepth, id);
+      if (objectProperties.bReportAreaByLevel) {
+        console.log(objectProperties.bReportAreaByLevel);
+      } else {
+        console.log(objectProperties.bReportAreaByLevel);
+      }
 
+      var objectName = await WSM.APIGetObjectNameReadOnly(historyDepth, id);
       console.log(objectName);
 
-      var Attributes = await WSM.APIGetObjectAttributesReadOnly(
-        historyDepth,
-        id
+      var APIGetObjectAttributesReadOnly =
+        await WSM.APIGetObjectAttributesReadOnly(historyDepth, id);
+      console.log(
+        "APIGetObjectAttributesReadOnly",
+        APIGetObjectAttributesReadOnly
       );
 
-      console.log(Attributes);
-
       let props = await FormIt.Model.GetPropertiesForSelected();
-
       console.log(props);
 
       let getObjectName = await FormIt.Model.GetObjectName(id);
-
       console.log("getObjectName", getObjectName);
 
       let getProjectSiteArea = await FormIt.Model.GetProjectSiteArea();
-
       console.log("getProjectSiteArea", getProjectSiteArea);
 
       let getProjectTargetArea = await FormIt.Model.GetProjectTargetArea();
-
       console.log("getProjectTargetArea", getProjectTargetArea);
 
       let getBuildingType = await FormIt.GetBuildingType();
-
       console.log("getBuildingType", getBuildingType);
 
       let getAllLayers = await FormIt.Layers.GetAllLayers();
-
       console.log("getAllLayers", getAllLayers);
 
       let getAllLayerData = await FormIt.Layers.GetAllLayerData();
-
       console.log("getAllLayerData", getAllLayerData);
 
+      let datas = [];
       for (var m = 0; m < getAllLayers.length; m++) {
         let getLayerData = await FormIt.Layers.GetLayerData(getAllLayers[m]);
+
+        datas.push({
+          id: getLayerData.Id,
+          col1: getLayerData.Name,
+          col2: getLayerData.Pickable,
+          col3: getLayerData.Visible,
+        });
         console.log("getLayerData", getLayerData);
       }
+
+      await this.setState({ rows: datas.map((row) => ({ ...row })) });
+      console.log("this.setState", this.state.rows);
 
       let getObjectLayerID = await FormIt.Layers.GetObjectLayerID(
         historyDepth,
         id
       );
-
       console.log("getObjectLayerID", getObjectLayerID);
 
       //let getLayerData = await FormIt.Layers.GetLayerData(getObjectLayerID);
@@ -356,11 +454,9 @@ class App extends Component {
 
       let objectReportsAreaByLevel =
         await FormIt.Model.ObjectReportsAreaByLevel(id);
-
       console.log("objectReportsAreaByLevel", objectReportsAreaByLevel);
 
       let getTotalGrossArea = await FormIt.Model.GetTotalGrossArea();
-
       console.log("getTotalGrossArea", getTotalGrossArea);
       // getTotalGrossArea 3288
 
@@ -394,6 +490,8 @@ class App extends Component {
 
       console.log("this.props.tableData", this.props.tableData);
       this.setState({ tableData: this.props.tableData });
+
+      //----------------------
 
       //FormIt.Model.SetObjectName(id, "lkjkjskldjjlLVFJLJLJKJKLJKLJKLJ");
 
@@ -436,11 +534,11 @@ class App extends Component {
       //   );
 
       //   //console.log(dArea);
-      // }
-
-      //let isLevel = await FormIt.Levels.IsExistingLevel(historyDepth, "level1");
-      //let level = await FormIt.Levels.GetLevelData(historyDepth, "level1");
     }
+
+    //let isLevel = await FormIt.Levels.IsExistingLevel(historyDepth, "level1");
+    //let level = await FormIt.Levels.GetLevelData(historyDepth, "level1");
+    //}
 
     console.log("handleGetArea: end");
   }
@@ -466,6 +564,14 @@ class App extends Component {
 
     const { classes } = this.props;
     const cellList = ["ID", "Code", "Name"];
+    const allBuilding = [
+      { field: "col1", headerName: "용도", width: 100 },
+      { field: "col2", headerName: "동", width: 100 },
+      { field: "col3", headerName: "층수", width: 100 },
+      { field: "col4", headerName: "연면적", width: 100 },
+    ];
+
+    console.log("app.render");
 
     return (
       <div className={classes.root}>
@@ -504,9 +610,6 @@ class App extends Component {
             </div>
           </Toolbar>
         </AppBar>
-        <div className={classes.menu}>
-          <CustomerAdd stateRefresh={this.stateRefresh} />
-        </div>
         <Paper variant="outlined" className={classes.paper}>
           <Table>
             <TableHead>
@@ -538,14 +641,14 @@ class App extends Component {
           </Table>
         </Paper>
         <br />
-        <div>Project Infomation</div>
+        <div className={classes.subtitle}>Project Infomation</div>
         <br />
         <Paper className={classes.paper}>
           <Stack spacing={2}>{this.state.projectInfo}</Stack>
         </Paper>
 
         <br />
-        <div>면적 정보</div>
+        <div className={classes.subtitle}>면적 정보</div>
         <Button
           variant="contained"
           color="primary"
@@ -562,7 +665,7 @@ class App extends Component {
         </Button>
         <br />
         <Paper className={classes.paper}>
-          <DataTable/>
+          <DataTable rows={this.state.rows} columns={allBuilding} />
         </Paper>
       </div>
     );

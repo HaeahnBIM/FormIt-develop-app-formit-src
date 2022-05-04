@@ -75,23 +75,6 @@ class Project extends React.Component {
         >
           {this.props.name}
         </TableCell>
-        <TableCell
-          onClick={(event) => {
-            this.handleClick(event, this.props.id, this.props.name);
-          }}
-        >
-          <ButtonGroup name="type">
-            <CustomerDelete
-              stateRefresh={this.props.stateRefresh}
-              id={this.props.id}
-            />
-            <CustomerEdit
-              stateRefresh={this.props.stateRefresh}
-              id={this.props.id}
-              name={this.props.name}
-            />
-          </ButtonGroup>
-        </TableCell>
       </TableRow>
     );
   }
