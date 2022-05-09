@@ -33,6 +33,7 @@ import {
   WSM,
 } from "https://formit3d.github.io/SharedPluginUtilities/FormIt.mod.js";
 import DataTable from "./components/DataTable";
+import { circularProgressClasses } from "@mui/material";
 
 const th = createTheme({
   status: {},
@@ -74,7 +75,7 @@ const styles = (theme) => ({
     fontSize: "1.0rem",
   },
   menuButton: {
-    marginLeft: -12,
+    marginLeft: 0,
     marginRight: 20,
   },
   title: {
@@ -151,12 +152,14 @@ class App extends Component {
       currentId: "",
       x: 0,
       y: 0,
-      rows: [],
+      rowsGrid0: [],
+      rowsGrid1: [],
     };
     this.stateRefresh = this.stateRefresh.bind(this);
     this.handleValueChange = this.handleValueChange.bind(this);
     this.handleCreateBlock = this.handleCreateBlock.bind(this);
     this.handleGetArea = this.handleGetArea.bind(this);
+    this.handleGetAreaPerDong = this.handleGetAreaPerDong.bind(this);
   }
 
   handleValueChange(e) {
@@ -284,23 +287,19 @@ class App extends Component {
     let val2 = 0;
     if (unit === 0) {
       console.log(unit);
-      val2 = 1
-    } 
-    else if (unit === 1) {
+      val2 = 1;
+    } else if (unit === 1) {
       console.log(unit);
-      val2 = 0.09290304
-    } 
-    else if (unit === 2) {
+      val2 = 0.09290304;
+    } else if (unit === 2) {
       console.log(unit);
-      val2 = 12
-    } 
-    else if (unit === 3) {
+      val2 = 12;
+    } else if (unit === 3) {
       console.log(unit);
-      val2 = 0.09290304
-    }
-     else if (unit === 4) {
+      val2 = 0.09290304;
+    } else if (unit === 4) {
       console.log(unit);
-      val2 = 0.09290304
+      val2 = 0.09290304;
     }
 
     // let a = FormIt.UnitType.kImperialFeetInches;
@@ -313,6 +312,7 @@ class App extends Component {
     return val * val2;
   };
 
+  // 용도별 면적표
   async handleGetArea(e) {
     console.log("handleGetArea: start: ");
 
@@ -327,11 +327,11 @@ class App extends Component {
     for (var i = 0; i < allBody.length; i++) {
       let curId = allBody[i];
 
-    let layerId = await WSM.APIGetObjectLayersReadOnly(history, curId)	
-    console.log("layerObj", layerId[0]);
+      let layerId = await WSM.APIGetObjectLayersReadOnly(history, curId);
+      console.log("layerObj", layerId[0]);
 
-    let layerData = await WSM.APIGetLayerDataReadOnly(history, layerId[0]);
-    console.log("layerData", layerData);
+      let layerData = await WSM.APIGetLayerDataReadOnly(history, layerId[0]);
+      console.log("layerData", layerData);
 
       var objectProps = await WSM.APIGetObjectPropertiesReadOnly(
         history,
@@ -352,12 +352,16 @@ class App extends Component {
         let levelData = await WSM.APIGetLevelDataReadOnly(history, curLevelId);
         if (levelData.dElevation < 0) {
           continue;
-        } 
-        
-        sumArea = sumArea + this.convertUnit(area, FormIt.UnitType.kMetricMeter);
-        sumArea = Number((sumArea).toFixed(2));
+        }
+
+        console.log("levelData", levelData);
+
+        sumArea =
+          sumArea + this.convertUnit(area, FormIt.UnitType.kMetricMeter);
+        sumArea = Number(sumArea.toFixed(2));
       }
-      sumArea = Number((sumArea).toFixed(2));
+
+      sumArea = Number(sumArea.toFixed(2));
 
       buildings.push({
         id: curId,
@@ -370,7 +374,7 @@ class App extends Component {
       //console.log("objectProperties", objectProperties);
     }
 
-    await this.setState({ rows: buildings.map((row) => ({ ...row })) });
+    await this.setState({ rowsGrid0: buildings.map((row) => ({ ...row })) });
 
     let props = await FormIt.Model.GetPropertiesForSelected();
 
@@ -543,6 +547,187 @@ class App extends Component {
     console.log("handleGetArea: end");
   }
 
+  // 동/층별 면적표
+  async handleGetAreaPerDong(e) {
+    console.log("handleGetAreaPerDong: start");
+
+    let history = 0;
+
+    let allBody = await WSM.APIGetAllObjectsByTypeReadOnly(history, 1); // 1=nBodyType
+
+    let levels = [];
+
+    let id = 0;
+    for (var i = 0; i < allBody.length; i++) {
+      let curId = allBody[i];
+
+      var objectProps = await WSM.APIGetObjectPropertiesReadOnly(
+        history,
+        curId
+      );
+
+      // 현재 body의 levels 가져오기
+      var objectLevels = await WSM.APIGetObjectLevelsReadOnly(history, curId);
+      let levelsData = [];
+
+      for (var j = 0; j < objectLevels.length; j++) {
+        let curLevelId = objectLevels[j];
+        let area = await FormIt.Levels.GetAreaForObjects(
+          history,
+          curLevelId,
+          curId
+        );
+        if (area === 0) {
+          continue;
+        }
+
+        let levelData = await WSM.APIGetLevelDataReadOnly(history, curLevelId);
+
+        let data = {
+          id: curLevelId,
+          dElevation: levelData.dElevation,
+          sLevelName: levelData.sLevelName,
+        };
+        levelsData.push(data);
+      }
+
+      // elevation으로 정렬 (지하->지상)
+      levelsData.sort(function (a, b) {
+        if (a.dElevation > b.dElevation) {
+          return 1;
+        }
+        if (a.dElevation < b.dElevation) {
+          return -1;
+        }
+        // a must be equal to b
+        return 0;
+      });
+
+      let firstLevelId = levelsData[0].id;
+
+      let beforeLevelArea = await FormIt.Levels.GetAreaForObjects(
+        history,
+        firstLevelId,
+        curId
+      );
+
+      beforeLevelArea = Number(beforeLevelArea.toFixed(2));
+
+      let beforeLevelName = "";
+      let lastLevelName = "";
+
+      let floorCount = 0;
+
+      let curArea = 0;
+      let beforeArea = 0;
+      let strLevel = "";
+
+      let bPush = false;
+
+      for (var k = 0; k < levelsData.length; k++) {
+        let curLevelId = levelsData[k].id;
+        let curLevelName = levelsData[k].sLevelName;
+        curArea = await FormIt.Levels.GetAreaForObjects(
+          history,
+          curLevelId,
+          curId
+        );
+        curArea = this.convertUnit(curArea, FormIt.UnitType.kMetricMeter);
+        curArea = Number(curArea.toFixed(2));
+
+        if (beforeArea === 0) {
+          beforeArea = curArea;
+          beforeLevelName = curLevelName;
+          floorCount++;
+          continue;
+        }
+
+        if (curArea !== beforeArea) {
+          if (floorCount === 1) {
+            strLevel = beforeLevelName;
+          } else {
+            strLevel = beforeLevelName + "~" + lastLevelName;
+          }
+          levels.push({
+            id: id,
+            col1: objectProps.sObjectName,
+            col2: strLevel,
+            col3: floorCount,
+            col4: beforeArea,
+          });
+
+          floorCount = 1;
+          bPush = true;
+          beforeArea = curArea;
+          beforeLevelName = curLevelName;
+        } else {
+          lastLevelName = curLevelName;
+          floorCount++;
+          id++;
+        }
+      }
+
+      id++;
+
+      if (bPush && floorCount > 0) {
+        if (floorCount === 1) {
+          strLevel = beforeLevelName;
+        } else {
+          strLevel = beforeLevelName + "~" + lastLevelName;
+        }
+        levels.push({
+          id: id,
+          col1: objectProps.sObjectName,
+          col2: strLevel,
+          col3: floorCount,
+          col4: beforeArea,
+        });
+      } else if (bPush === false && floorCount > 0) {
+        levels.push({
+          id: id,
+          col1: objectProps.sObjectName,
+          col2: beforeLevelName + "~" + lastLevelName,
+          col3: floorCount,
+          col4: beforeArea,
+        });
+      }
+
+      // for (var m = 0; m < levelsData.length; m++) {
+      //   let afterLevelId = levelsData[m].id;
+      //   let curLevelId = levelsData[m].id;
+      //   curLevelName = levelsData[m].sLevelName;
+      //   curElevation = levelsData[m].dElevation;
+      //   curArea = await FormIt.Levels.GetAreaForObjects(
+      //     history,
+      //     curLevelId,
+      //     curId
+      //   );
+      //   beforeArea = await FormIt.Levels.GetAreaForObjects(
+      //     history,
+      //     afterLevelId,
+      //     curId
+      //   );
+      //   //curArea = Number(curArea.toFixed(2));
+
+      //   if (curElevation < 0) {
+      //     // 지하일때
+      //     console.log("지하", objectProps.sObjectName, curLevelName);
+      //   } else {
+      //     // 지상일때
+      //     if (curArea === beforeArea) {
+      //       console.log("지상", objectProps.sObjectName, curLevelName);
+      //     }
+      //   }
+
+      //   id++;
+      // }
+
+      await this.setState({ rowsGrid1: levels.map((row) => ({ ...row })) });
+    }
+
+    console.log("handleGetAreaPerDong: end");
+  }
+
   render() {
     const filteredComponents = (data) => {
       data = data.filter((c) => {
@@ -564,14 +749,21 @@ class App extends Component {
 
     const { classes } = this.props;
     const cellList = ["ID", "Code", "Name"];
-    const allBuilding = [
+
+    const colsGrid0 = [
       { field: "col1", headerName: "용도", width: 100 },
       { field: "col2", headerName: "동", width: 100 },
       { field: "col3", headerName: "층수", width: 100 },
-      { field: "col4", headerName: "연면적", width: 100 },
+      { field: "col4", headerName: "연면적", width: 120 },
+    ];
+    const colsGrid1 = [
+      { field: "col1", headerName: "동", width: 100 },
+      { field: "col2", headerName: "구분", width: 100 },
+      { field: "col3", headerName: "층수", width: 100 },
+      { field: "col4", headerName: "면적", width: 120 },
     ];
 
-    console.log("app.render");
+    //console.log("app.render");
 
     return (
       <div className={classes.root}>
@@ -648,24 +840,37 @@ class App extends Component {
         </Paper> */}
 
         <br />
-        <div className={classes.subtitle}>면적 정보</div>
         <Button
           variant="contained"
           color="primary"
-          onClick={this.handleCreateBlock}
+          onClick={this.handleGetLayer}
         >
-          블럭생성
+          설정
         </Button>
+
         <Button
           variant="contained"
           color="primary"
           onClick={this.handleGetArea}
         >
-          동/층별
+          용도별면적표
         </Button>
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={this.handleGetAreaPerDong}
+        >
+          동/층별면적표
+        </Button>
+
         <br />
+        <div className={classes.subtitle}>면적 정보</div>
         <Paper className={classes.paper}>
-          <DataTable rows={this.state.rows} columns={allBuilding} />
+          <DataTable height={300} rows={this.state.rowsGrid0} columns={colsGrid0} />
+        </Paper>
+        <Paper className={classes.paper}>
+          <DataTable height={500} rows={this.state.rowsGrid1} columns={colsGrid1} />
         </Paper>
       </div>
     );

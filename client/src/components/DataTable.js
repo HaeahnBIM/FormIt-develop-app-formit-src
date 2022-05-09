@@ -16,10 +16,10 @@ function App(props) {
   //const [rows, setRows] = useState(props.rows);
   // const [columns, setColumns] = useState(props.columns);
 
-  console.log(props);
+  //console.log(props);
 
   return (
-    <div style={{ height: 300, width: "100%" }}>
+    <div style={{ height: props.height, width: "100%" }}>
       <DataGrid
         rows={props.rows ? props.rows : _rows}
         columns={props.columns}
