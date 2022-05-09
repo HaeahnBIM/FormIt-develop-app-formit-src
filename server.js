@@ -72,6 +72,14 @@ app.get("/api/projects/info/:id", (req, res) => {
   });
 });
 
+app.get("/api/layer", (req, res) => {
+  var request = new sql.Request();
+  q = "SELECT A.ID, A.NM_BUIS, A.NM_FCLTY, A.NM_LAYR FROM TB_FMT_LAYER A";
+  request.query(q, (err, rows, fields) => {
+    res.send(rows.recordset);
+  });
+});
+
 //app.use("/image", express.static("./upload"));
 
 // app.post("/api/customers", upload.single("image"), (req, res) => {

@@ -13,6 +13,8 @@ const _columns = [
 ];
 
 function App(props) {
+  const [selectionModel, setSelectionModel] = React.useState([])
+  const data = [];
   //const [rows, setRows] = useState(props.rows);
   // const [columns, setColumns] = useState(props.columns);
 
@@ -23,6 +25,13 @@ function App(props) {
       <DataGrid
         rows={props.rows ? props.rows : _rows}
         columns={props.columns}
+        checkboxSelection={props.checkbox}
+        onSelectionModelChange={(newSelectionModel) => {
+          setSelectionModel(newSelectionModel);
+          //console.log(newSelectionModel);
+        }}
+        selectionModel={selectionModel}
+        {...data}
       />
     </div>
   );

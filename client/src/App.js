@@ -12,6 +12,7 @@ import { withStyles } from "@mui/styles";
 import { styled } from "@mui/material/styles";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomerAdd from "./components/CustomerAdd";
+import Layer from "./components/Layer";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
@@ -32,6 +33,7 @@ import {
   FormIt,
   WSM,
 } from "https://formit3d.github.io/SharedPluginUtilities/FormIt.mod.js";
+import { DataGrid } from "@mui/x-data-grid";
 import DataTable from "./components/DataTable";
 import { circularProgressClasses } from "@mui/material";
 
@@ -154,10 +156,12 @@ class App extends Component {
       y: 0,
       rowsGrid0: [],
       rowsGrid1: [],
+      rowsLayer: [],
     };
     this.stateRefresh = this.stateRefresh.bind(this);
     this.handleValueChange = this.handleValueChange.bind(this);
     this.handleCreateBlock = this.handleCreateBlock.bind(this);
+    this.handleGetLayer = this.handleGetLayer.bind(this);
     this.handleGetArea = this.handleGetArea.bind(this);
     this.handleGetAreaPerDong = this.handleGetAreaPerDong.bind(this);
   }
@@ -180,7 +184,6 @@ class App extends Component {
   }
 
   componentDidMount() {
-    console.log("componentDidMount");
     //this.timer = setInterval(this.progress, 20);
     this.callApi("/api/projects")
       .then((res) => this.setState({ projects: res }))
@@ -225,7 +228,7 @@ class App extends Component {
     e.preventDefault();
 
     //this.setState({ currentId: id });
-    //console.log(this.state.currentId);
+    console.log("handleClick = (e, id, name)", id);
 
     let _projectinfo = [];
 
@@ -250,9 +253,11 @@ class App extends Component {
       })
       .catch((err) => console.log(err));
 
-    this.setState({
-      projectInfo: _projectinfo,
-    });
+    // this.setState({
+    //   projectInfo: _projectinfo,
+    // });
+
+    this.setState({ projectInfo: _projectinfo.map((row) => ({ ...row })) });
   };
 
   async handleCreateBlock(e) {
@@ -311,6 +316,23 @@ class App extends Component {
 
     return val * val2;
   };
+
+  handleGetLayer(e) {
+    e.preventDefault();
+
+    //this.setState({ currentId: id });
+    //console.log(this.state.currentId);
+
+    let rows = [];
+
+    this.callApi("/api/layer")
+      .then((res) => this.setState({ rows: res }))
+      .catch((err) => console.log(err));
+
+    this.setState({ rowsLayer: rows });
+
+    console.log(this.state.rowsLayer);
+  }
 
   // 용도별 면적표
   async handleGetArea(e) {
@@ -763,11 +785,23 @@ class App extends Component {
       { field: "col4", headerName: "면적", width: 120 },
     ];
 
-    //console.log("app.render");
+    const _rows = [
+      { id: 1, col1: "Hello", col2: "World", col3: "hjh" },
+      { id: 2, col1: "DataGridPro", col2: "is Awesome", col3: "jhj" },
+      { id: 3, col1: "MUI", col2: "is Amazing", col3: "hgg" },
+    ];
+
+    const _columns = [
+      { field: "col1", headerName: "Column 1", width: 150 },
+      { field: "col2", headerName: "Column 2", width: 150 },
+      { field: "col3", headerName: "Column 3", width: 150 },
+    ];
+
+    console.log(this.state.projectInfo);
 
     return (
       <div className={classes.root}>
-        <AppBar position="static">
+        {/* <AppBar position="static">
           <Toolbar>
             <IconButton
               className={classes.menuButton}
@@ -802,7 +836,7 @@ class App extends Component {
             </div>
           </Toolbar>
         </AppBar>
-        {/* <Paper variant="outlined" className={classes.paper}>
+        <Paper variant="outlined" className={classes.paper}>
           <Table>
             <TableHead>
               <TableRow>
@@ -837,13 +871,33 @@ class App extends Component {
         <br />
         <Paper className={classes.paper}>
           <Stack spacing={2}>{this.state.projectInfo}</Stack>
-        </Paper> */}
+        </Paper>
 
-        <br />
+        <br /> */}
+
+        <div style={{ height: 400, width: "100%" }}>
+          <DataGrid rows={this.state.projectInfo} columns={_columns} />
+        </div>
+
         <Button
           variant="contained"
           color="primary"
-          onClick={this.handleGetLayer}
+          onClick={() => {
+            let rows = [];
+
+            console.log("rows");
+            
+            this.callApi("/api/layer")
+              .then((res) => {
+                console.log(res);
+                this.setState({ rowsLayer: res });
+              })
+              .catch((err) => console.log(err));
+
+            //this.setState({ rowsLayer: rows });
+
+            console.log(this.state.rows);
+          }}
         >
           설정
         </Button>
@@ -867,10 +921,20 @@ class App extends Component {
         <br />
         <div className={classes.subtitle}>면적 정보</div>
         <Paper className={classes.paper}>
-          <DataTable height={300} rows={this.state.rowsGrid0} columns={colsGrid0} />
+          <DataTable
+            checkbox={false}
+            height={300}
+            rows={this.state.rowsGrid0}
+            columns={colsGrid0}
+          />
         </Paper>
         <Paper className={classes.paper}>
-          <DataTable height={500} rows={this.state.rowsGrid1} columns={colsGrid1} />
+          <DataTable
+            checkbox={false}
+            height={500}
+            rows={this.state.rowsGrid1}
+            columns={colsGrid1}
+          />
         </Paper>
       </div>
     );
