@@ -326,12 +326,12 @@ class App extends Component {
     let rows = [];
 
     this.callApi("/api/layer")
-      .then((res) => this.setState({ rows: res }))
+      .then((res) => this.setState({ rowsLayer: res }))
       .catch((err) => console.log(err));
 
-    this.setState({ rowsLayer: rows });
+    //this.setState({ rowsLayer: rows });
 
-    console.log(this.state.rowsLayer);
+    console.log("handleGetLayer(e)", this.state.rowsLayer);
   }
 
   // 용도별 면적표
@@ -882,22 +882,7 @@ class App extends Component {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => {
-            let rows = [];
-
-            console.log("rows");
-            
-            this.callApi("/api/layer")
-              .then((res) => {
-                console.log(res);
-                this.setState({ rowsLayer: res });
-              })
-              .catch((err) => console.log(err));
-
-            //this.setState({ rowsLayer: rows });
-
-            console.log(this.state.rows);
-          }}
+          onClick={this.handleGetLayer}
         >
           설정
         </Button>
@@ -920,22 +905,18 @@ class App extends Component {
 
         <br />
         <div className={classes.subtitle}>면적 정보</div>
-        <Paper className={classes.paper}>
           <DataTable
             checkbox={false}
             height={300}
             rows={this.state.rowsGrid0}
             columns={colsGrid0}
           />
-        </Paper>
-        <Paper className={classes.paper}>
           <DataTable
             checkbox={false}
             height={500}
             rows={this.state.rowsGrid1}
             columns={colsGrid1}
           />
-        </Paper>
       </div>
     );
   }
