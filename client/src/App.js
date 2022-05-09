@@ -610,7 +610,7 @@ class App extends Component {
             </div>
           </Toolbar>
         </AppBar>
-        <Paper variant="outlined" className={classes.paper}>
+        {/* <Paper variant="outlined" className={classes.paper}>
           <Table>
             <TableHead>
               <TableRow>
@@ -645,7 +645,7 @@ class App extends Component {
         <br />
         <Paper className={classes.paper}>
           <Stack spacing={2}>{this.state.projectInfo}</Stack>
-        </Paper>
+        </Paper> */}
 
         <br />
         <div className={classes.subtitle}>면적 정보</div>
