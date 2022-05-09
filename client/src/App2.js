@@ -22,40 +22,13 @@ const _columns = [
   { field: "col3", headerName: "Column 2", width: 150 },
 ];
 
-function App(props) {
+function App (props) {
   const [layers, setLayers] = React.useState([]);
   const [open, setOpen] = React.useState(false);
   const [selectionModel, setSelectionModel] = React.useState([]);
   const [rowsGrid0, setRowsGrid0] = React.useState([]);
   const [rowsGrid1, setRowsGrid1] = React.useState([]);
   const data = [];
-
-  const handleClick = (e) => {
-    e.preventDefault();
-    handleLayers();
-    setOpen(true);
-  };
-
-  const handleSetLayer = async (e) => {
-    e.preventDefault();
-    setOpen(false);
-
-    for (let i = 0; i < selectionModel.length; i++) {
-      const layerModel = selectionModel[i];
-      const cur = layers.find((x) => x.id === layerModel);
-
-      await FormIt.Layers.AddLayer(0, cur.col3, true);
-    }
-
-    alert(selectionModel.length + " 개의 레이어를 추가했습니다.");
-
-    setSelectionModel([]);
-  };
-
-  const handleClose = (event) => {
-    setSelectionModel([]);
-    setOpen(false);
-  };
 
   const colsGrid0 = [
     { field: "col1", headerName: "용도", width: 100 },
@@ -104,6 +77,33 @@ function App(props) {
     // console.log(a, b, c, d, e);
 
     return val * val2;
+  };
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    handleLayers();
+    setOpen(true);
+  };
+
+  const handleSetLayer = async (e) => {
+    e.preventDefault();
+    setOpen(false);
+
+    for (let i = 0; i < selectionModel.length; i++) {
+      const layerModel = selectionModel[i];
+      const cur = layers.find((x) => x.id === layerModel);
+
+      await FormIt.Layers.AddLayer(0, cur.col3, true);
+    }
+
+    alert(selectionModel.length + " 개의 레이어를 추가했습니다.");
+
+    setSelectionModel([]);
+  };
+
+  const handleClose = (event) => {
+    setSelectionModel([]);
+    setOpen(false);
   };
 
   // 용도별 면적표
