@@ -22,7 +22,7 @@ const _columns = [
   { field: "col3", headerName: "Column 2", width: 150 },
 ];
 
-function App(props) {
+function App (props) {
   const [layers, setLayers] = React.useState([]);
   const [plan, setPlan] = React.useState([]);
   const [open, setOpen] = React.useState(false);
@@ -484,8 +484,6 @@ function App(props) {
     }
 
     return sumArea;
-
-    return 0;
   };
 
   const calcRateGrnd = (areaTotal, areaSite) => {
