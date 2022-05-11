@@ -22,7 +22,7 @@ const _columns = [
   { field: "col3", headerName: "Column 2", width: 150 },
 ];
 
-function App (props) {
+function App(props) {
   const [layers, setLayers] = React.useState([]);
   const [plan, setPlan] = React.useState([]);
   const [open, setOpen] = React.useState(false);
@@ -510,7 +510,6 @@ function App (props) {
     let levels = await FormIt.Levels.GetLevels(history, true);
 
     for (var i = 0; i < levels.length; i++) {
-      
       let emptyArea = false;
 
       for (var j = 0; j < allBody.length; j++) {
@@ -574,14 +573,11 @@ function App (props) {
     let rateGrndHouse = calcRateGrndHouse(areaGrndHouse, areaSite); // 주거용적률
     // 건축규모(지상/지하)
     // 주차대수(지하)
-
     //console.log("calcAreaTotal", areaTotal);
     //console.log("calcAreaGrnd", areaGrnd);
     //console.log("calcAreaGrndHouse", areaGrndHouse);
     //console.log("calcRateGrnd", rateGrnd);
     //console.log("calcRateGrndHouse", rateGrndHouse);
-
-    // let rows = [];
 
     const postData = {
       ID_PROJ: "3",
@@ -594,6 +590,7 @@ function App (props) {
       RATE_HUS_GRND: rateGrndHouse,
     };
 
+    let planId = 0;
     try {
       const res = await fetch(`/api/projects/planSave`, {
         method: "post",
@@ -608,7 +605,7 @@ function App (props) {
         throw new Error(message);
       }
       const data = await res.json();
-      const result = {
+      const result0 = {
         status: res.status + "-" + res.statusText,
         headers: {
           "Content-Type": res.headers.get("Content-Type"),
@@ -617,10 +614,122 @@ function App (props) {
         data: data,
       };
       //setPostResult(fortmatResponse(result));
-      console.log(fortmatResponse(result))
+      //console.log(fortmatResponse(result));
+      planId = result0.data[0].id;
     } catch (err) {
       //setPostResult(err.message);
-      console.log(err)
+      console.log(err);
+    }
+
+    // let rows = [];
+
+    for (let i = 0; i < rowsGrid0.length; i++) {
+      const e = rowsGrid0[i];
+      //console.log(e);
+      //console.log("==========================");
+
+      // TB_FMT_PROJECT_PLAN_DONGS
+      const postData0 = {
+        ID_PROJ: 3,
+        ID_PLAN: planId,
+        ID_FMT: 0,
+        NM_DONG: e.col2,
+        NM_LAYR: e.col1,
+        AREA_GRND: e.col4,
+        AREA_BSMT: 0,
+        NMBR_FLR_GRND: e.col3,
+        NMBR_FLR_BSMT: 0,
+      };
+
+      try {
+        const res = await fetch(`/api/projects/planDongSave`, {
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": "token-value",
+          },
+          body: JSON.stringify(postData0),
+        });
+        if (!res.ok) {
+          const message = `An error has occured: ${res.status} - ${res.statusText}`;
+          throw new Error(message);
+        }
+        const data = await res.json();
+        const result1 = {
+          status: res.status + "-" + res.statusText,
+          headers: {
+            "Content-Type": res.headers.get("Content-Type"),
+            "Content-Length": res.headers.get("Content-Length"),
+          },
+          data: data,
+        };
+        //setPostResult(fortmatResponse(result));
+        //console.log(fortmatResponse(result1));
+        let dongId = result1.data[0].id;
+
+        //=======================================================
+
+        for (let j = 0; j < rowsGrid1.length; j++) {
+          const e1 = rowsGrid1[j];
+
+          if (e.col2 !== e1.col1){
+            continue;
+          }
+          
+          console.log("==========================");
+          console.log(e1);
+
+          // TB_FMT_PROJECT_PLAN_FLOORS
+          const postData1 = {
+            ID_PROJ: 3,
+            ID_PLAN: planId,
+            ID_DONG: dongId,
+            NM_LEVLS: e1.col2,
+            NMBR_FLR_GRND: e1.col3,
+            NMBR_FLR_BSMT: 0,
+            AREA_LEVL: e1.col4,
+            IS_GRND: 1,
+          };
+          
+          console.log(postData1);
+          console.log("==========================");
+
+          let floorId = 0;
+          try {
+            const res = await fetch(`/api/projects/planFloorSave`, {
+              method: "post",
+              headers: {
+                "Content-Type": "application/json",
+                "x-access-token": "token-value",
+              },
+              body: JSON.stringify(postData1),
+            });
+            if (!res.ok) {
+              const message = `An error has occured: ${res.status} - ${res.statusText}`;
+              throw new Error(message);
+            }
+            const data = await res.json();
+            const result2 = {
+              status: res.status + "-" + res.statusText,
+              headers: {
+                "Content-Type": res.headers.get("Content-Type"),
+                "Content-Length": res.headers.get("Content-Length"),
+              },
+              data: data,
+            };
+            //setPostResult(fortmatResponse(result));
+            //console.log(fortmatResponse(result2));
+            //floorId = result2.data[0].id;
+
+          } catch (err) {
+            //setPostResult(err.message);
+            console.log(err);
+          }
+        }
+      } catch (err) {
+        //setPostResult(err.message);
+        console.log(err);
+      }
     }
   };
 

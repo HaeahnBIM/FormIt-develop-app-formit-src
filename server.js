@@ -89,6 +89,7 @@ app.get("/api/projects/plan", (req, res) => {
   var request = new sql.Request();
   q = `SELECT 
       B.NM_PROJ,
+      A.ID,
       A.AREA_DNT, 
       A.AREA_BLD, 
       A.RATE_BLDCV, 
@@ -106,6 +107,45 @@ app.get("/api/projects/plan", (req, res) => {
   FROM
       TB_FMT_PROJECT_PLANS A left join TB_FMT_PROJECT B on A.ID_PROJ = B.ID 
   `;
+  console.log(q);
+  request.query(q, (err, rows, fields) => {
+    res.send(rows.recordset);
+  });
+});
+
+app.post("/api/projects/plandong", (req, res) => {
+  var request = new sql.Request();
+  console.log(req.body);  
+  const ID_PLAN = req.body.ID_PLAN;
+
+  q = `SELECT 
+      *
+  FROM
+      TB_FMT_PROJECT_PLAN_DONGS A
+  WHERE A.ID_PLAN = ${ID_PLAN}`;
+  console.log(q);
+  request.query(q, (err, rows, fields) => {
+    res.send(rows.recordset);
+  });
+});
+
+app.post("/api/projects/planfloor", (req, res) => {
+  var request = new sql.Request();
+  console.log(req.body);  
+  const ID_PLAN = req.body.ID_PLAN;
+
+  q = `SELECT 
+      A.ID_PROJ,
+      A.ID_PLAN,
+      A.ID_DONG,
+      B.NM_LAYR,
+      B.NM_DONG,
+      A.NM_LEVLS,
+      A.NMBR_FLR_GRND,
+      A.AREA_LEVL
+  FROM
+      TB_FMT_PROJECT_PLAN_FLOORS A left join TB_FMT_PROJECT_PLAN_DONGS B on A.ID_DONG = B.ID
+  WHERE A.ID_PLAN = ${ID_PLAN}`;
   console.log(q);
   request.query(q, (err, rows, fields) => {
     res.send(rows.recordset);
@@ -143,7 +183,7 @@ app.post("/api/projects/planSave", (req, res) => {
     AREA_HUS_GRND, 
     RATE_ALL_GRND,
     RATE_HUS_GRND, 
-    DT_CREATE)
+    DT_CREATE) OUTPUT INSERTED.id 
   VALUES(
     ${ID_PROJ}, 
     ${AREA_BLD}, 
@@ -154,9 +194,97 @@ app.post("/api/projects/planSave", (req, res) => {
     ${RATE_ALL_GRND}, 
     ${RATE_HUS_GRND}, 
     GETDATE());`;
-  console.log(q);
   request.query(q, (err, rows, fields) => {
-    res.send(rows);
+    res.send(rows.recordset);
+  });
+});
+
+app.post("/api/projects/planDongSave", (req, res) => {
+  var request = new sql.Request();
+  const ID_PROJ = req.body.ID_PROJ;
+  const ID_PLAN = req.body.ID_PLAN;
+  const ID_FMT = req.body.ID_FMT;
+  const NM_DONG = req.body.NM_DONG;
+  const NM_LAYR = req.body.NM_LAYR;
+  const AREA_GRND = req.body.AREA_GRND;
+  const AREA_BSMT = req.body.AREA_BSMT;
+  const NMBR_FLR_GRND = req.body.NMBR_FLR_GRND;
+  const NMBR_FLR_BSMT = req.body.NMBR_FLR_BSMT;
+
+  q = 
+  `INSERT INTO 
+  TB_FMT_PROJECT_PLAN_DONGS
+  (
+    ID_PROJ, 
+    ID_PLAN, 
+    ID_FMT, 
+    NM_DONG, 
+    NM_LAYR, 
+    AREA_GRND, 
+    AREA_BSMT,
+    NMBR_FLR_GRND, 
+    NMBR_FLR_BSMT, 
+    DT_CREATE) OUTPUT INSERTED.id 
+  VALUES(
+    ${ID_PROJ}, 
+    ${ID_PLAN}, 
+    ${ID_FMT}, 
+    '${NM_DONG}', 
+    '${NM_LAYR}',  
+    ${AREA_GRND}, 
+    ${AREA_BSMT}, 
+    ${NMBR_FLR_GRND}, 
+    ${NMBR_FLR_BSMT}, 
+    GETDATE());`;
+    console.log(q);
+  request.query(q, (err, rows, fields) => {
+    res.send(rows.recordset);
+  });
+});
+
+app.post("/api/projects/planFloorSave", (req, res) => {
+  var request = new sql.Request();
+  const ID_DONG = req.body.ID_DONG;
+  const NM_LEVLS = req.body.NM_LEVLS;
+  const NMBR_FLR_GRND = req.body.NMBR_FLR_GRND;
+  const NMBR_FLR_BSMT = req.body.NMBR_FLR_BSMT;
+  const AREA_LEVL = req.body.AREA_LEVL;
+  const IS_GRND = req.body.IS_GRND;
+  const ID_PROJ = req.body.ID_PROJ;
+  const ID_PLAN = req.body.ID_PLAN;
+
+  q = 
+  `INSERT INTO 
+  TB_FMT_PROJECT_PLAN_FLOORS
+  (
+    ID_DONG, 
+    NM_LEVLS, 
+    NMBR_FLR_GRND, 
+    NMBR_FLR_BSMT, 
+    AREA_LEVL, 
+    IS_GRND, 
+    IS_CRNT, 
+    DT_CREATE, 
+    ID_PROJ, 
+    ID_PLAN
+  ) OUTPUT INSERTED.id 
+  VALUES
+  (
+    ${ID_DONG}, 
+    '${NM_LEVLS}', 
+    ${NMBR_FLR_GRND}, 
+    ${NMBR_FLR_BSMT}, 
+    ${AREA_LEVL}, 
+    ${IS_GRND}, 
+    1, 
+    GETDATE(), 
+    ${ID_PROJ}, 
+    ${ID_PLAN});`
+
+    console.log(q);
+  request.query(q, (err, rows, fields) => {
+    res.send(rows.recordset);
+    console.log(q);
   });
 });
 
