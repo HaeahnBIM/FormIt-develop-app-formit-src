@@ -7,8 +7,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 //import { FormIt, WSM } from "https://formit3d.github.io/SharedPluginUtilities/FormIt.mod.js";
 
-// 수정
-
 let WSM = window.WSM;
 let FormIt = window.FormIt;
 
