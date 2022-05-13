@@ -54,7 +54,7 @@ app.get("/api/projects", (req, res) => {
   });
 });
 
-app.get("/api/projects/info/:id", (req, res) => {
+app.get("/api/projects/info", (req, res) => {
   var request = new sql.Request();
   q = `SELECT 
       B.CD_PROJ, 
@@ -72,20 +72,7 @@ app.get("/api/projects/info/:id", (req, res) => {
   });
 });
 
-const colsGrid3 = [
-  { field: "col1", headerName: "프로젝트", width: 80 },
-  { field: "col2", headerName: "건축면적", width: 80 },
-  { field: "col3", headerName: "건폐율", width: 80 },
-  { field: "col4", headerName: "연면적", width: 80 },
-  { field: "col5", headerName: "지상연면적", width: 80 },
-  { field: "col6", headerName: "주거연면적", width: 80 },
-  { field: "col7", headerName: "용적률", width: 80 },
-  { field: "col8", headerName: "주거용적률", width: 80 },
-  { field: "col9", headerName: "지하주차대수", width: 80 },
-  { field: "col10", headerName: "지상주차대수", width: 80 },
-];
-
-app.get("/api/projects/plan", (req, res) => {
+app.get("/api/projects/plans", (req, res) => {
   var request = new sql.Request();
   q = `SELECT 
       B.NM_PROJ,
@@ -113,9 +100,9 @@ app.get("/api/projects/plan", (req, res) => {
   });
 });
 
-app.post("/api/projects/plandong", (req, res) => {
+app.post("/api/project/planDongs", (req, res) => {
   var request = new sql.Request();
-  console.log(req.body);  
+  console.log(req.body);
   const ID_PLAN = req.body.ID_PLAN;
 
   q = `SELECT 
@@ -129,9 +116,9 @@ app.post("/api/projects/plandong", (req, res) => {
   });
 });
 
-app.post("/api/projects/planfloor", (req, res) => {
+app.post("/api/project/planFloors", (req, res) => {
   var request = new sql.Request();
-  console.log(req.body);  
+  console.log(req.body);
   const ID_PLAN = req.body.ID_PLAN;
 
   q = `SELECT 
@@ -152,7 +139,7 @@ app.post("/api/projects/planfloor", (req, res) => {
   });
 });
 
-app.get("/api/layer", (req, res) => {
+app.get("/api/setting/layers", (req, res) => {
   var request = new sql.Request();
   q = "SELECT A.ID, A.NM_BUIS, A.NM_FCLTY, A.NM_LAYR FROM TB_FMT_LAYER A";
   request.query(q, (err, rows, fields) => {
@@ -160,7 +147,7 @@ app.get("/api/layer", (req, res) => {
   });
 });
 
-app.post("/api/projects/planSave", (req, res) => {
+app.post("/api/project/planSave", (req, res) => {
   var request = new sql.Request();
   const ID_PROJ = req.body.ID_PROJ;
   const AREA_BLD = req.body.AREA_BLD;
@@ -171,8 +158,7 @@ app.post("/api/projects/planSave", (req, res) => {
   const RATE_ALL_GRND = req.body.RATE_ALL_GRND;
   const RATE_HUS_GRND = req.body.RATE_HUS_GRND;
 
-  q = 
-  `INSERT INTO 
+  q = `INSERT INTO 
   TB_FMT_PROJECT_PLANS
   (
     ID_PROJ, 
@@ -199,7 +185,7 @@ app.post("/api/projects/planSave", (req, res) => {
   });
 });
 
-app.post("/api/projects/planDongSave", (req, res) => {
+app.post("/api/project/planDongSave", (req, res) => {
   var request = new sql.Request();
   const ID_PROJ = req.body.ID_PROJ;
   const ID_PLAN = req.body.ID_PLAN;
@@ -211,8 +197,9 @@ app.post("/api/projects/planDongSave", (req, res) => {
   const NMBR_FLR_GRND = req.body.NMBR_FLR_GRND;
   const NMBR_FLR_BSMT = req.body.NMBR_FLR_BSMT;
 
-  q = 
-  `INSERT INTO 
+  console.log(req.body);
+
+  q = `INSERT INTO 
   TB_FMT_PROJECT_PLAN_DONGS
   (
     ID_PROJ, 
@@ -236,13 +223,13 @@ app.post("/api/projects/planDongSave", (req, res) => {
     ${NMBR_FLR_GRND}, 
     ${NMBR_FLR_BSMT}, 
     GETDATE());`;
-    console.log(q);
   request.query(q, (err, rows, fields) => {
     res.send(rows.recordset);
+    console.log(q);
   });
 });
 
-app.post("/api/projects/planFloorSave", (req, res) => {
+app.post("/api/project/planFloorSave", (req, res) => {
   var request = new sql.Request();
   const ID_DONG = req.body.ID_DONG;
   const NM_LEVLS = req.body.NM_LEVLS;
@@ -253,8 +240,7 @@ app.post("/api/projects/planFloorSave", (req, res) => {
   const ID_PROJ = req.body.ID_PROJ;
   const ID_PLAN = req.body.ID_PLAN;
 
-  q = 
-  `INSERT INTO 
+  q = `INSERT INTO 
   TB_FMT_PROJECT_PLAN_FLOORS
   (
     ID_DONG, 
@@ -279,13 +265,17 @@ app.post("/api/projects/planFloorSave", (req, res) => {
     1, 
     GETDATE(), 
     ${ID_PROJ}, 
-    ${ID_PLAN});`
+    ${ID_PLAN});`;
 
-    console.log(q);
+  console.log(q);
   request.query(q, (err, rows, fields) => {
     res.send(rows.recordset);
     console.log(q);
   });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}.`);
 });
 
 //app.use("/image", express.static("./upload"));
@@ -335,7 +325,3 @@ app.post("/api/projects/planFloorSave", (req, res) => {
 //     res.send(rows.recordset);
 //   });
 // });
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
